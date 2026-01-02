@@ -24,10 +24,8 @@ public class Event {
 
     private String description;
 
-    // Example: TECH_TALK, WORKSHOP, CULTURAL, SPORTS, STUDY_GROUP etc.
     private String category;
 
-    // Who created the event (later will link to User)
     private String organizerName;
 
     private String location;
@@ -36,8 +34,15 @@ public class Event {
 
     private LocalDateTime endTime;
 
-    // Whether event is visible to all
-    @JsonProperty("isPublic")      // <--- important
     @Builder.Default
-    private Boolean isPublic = true;   // <--- use wrapper Boolean, not primitive
+    private Boolean isPublic = true;
+
+    // 🔐 Who created the event (from JWT)
+    @Column(nullable = false)
+    private String createdByEmail;
+
+    // 🟡 Approval workflow
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private EventStatus status = EventStatus.PENDING;
 }

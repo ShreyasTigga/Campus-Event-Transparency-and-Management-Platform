@@ -1,15 +1,17 @@
 package com.campusevents.backend.service;
 
-import com.campusevents.backend.model.Event;
-
 import java.util.List;
-import java.util.Optional;
+import com.campusevents.backend.dto.CreateEventRequestDTO;
+import com.campusevents.backend.dto.EventResponseDTO;
 
 public interface EventService {
 
-    Event createEvent(Event event);
+    EventResponseDTO createEvent(CreateEventRequestDTO request, String creatorEmail);
 
-    List<Event> getAllEvents();
+    List<EventResponseDTO> getApprovedEvents();
 
-    Optional<Event> getEventById(Long id);
+    EventResponseDTO approveEvent(Long eventId);
+
+    EventResponseDTO rejectEvent(Long eventId);
 }
+
