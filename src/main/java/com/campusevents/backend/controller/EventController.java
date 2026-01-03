@@ -1,17 +1,13 @@
 package com.campusevents.backend.controller;
 
+import com.campusevents.backend.model.Event;
 import com.campusevents.backend.service.EventService;
-import com.campusevents.backend.dto.EventResponseDTO;
-import com.campusevents.backend.dto.CreateEventRequestDTO;
-
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,31 +18,60 @@ public class EventController {
 
     private final EventService eventService;
 
+    // ================= CREATE EVENT =================
     @PostMapping
-    @PreAuthorize("hasRole('FACULTY')")
-    public ResponseEntity<EventResponseDTO> createEvent(
-            @Valid @RequestBody CreateEventRequestDTO request,
+    public ResponseEntity<Event> createEvent(
+            @RequestBody Event event,
             Authentication authentication
     ) {
-        return ResponseEntity.status(HttpStatus.CREATED)
-                .body(eventService.createEvent(request, authentication.getName()));
+        String email = authentication.getName();
+        String role = extractRole(authentication);
+
+        Event savedEvent = eventService.createEvent(event, email, role);
+        return ResponseEntity.status(HttpStatus.CREATED).body(savedEvent);
     }
 
+    // ================= GET ALL EVENTS =================
     @GetMapping
-    @PreAuthorize("hasAnyRole('STUDENT','ADMIN')")
-    public List<EventResponseDTO> getApprovedEvents() {
-        return eventService.getApprovedEvents();
+    public ResponseEntity<List<Event>> getAllEvents(Authentication authentication) {
+        String role = extractRole(authentication);
+        return ResponseEntity.ok(eventService.getAllEvents(role));
     }
 
+    // ================= GET EVENT BY ID =================
+    @GetMapping("/{id}")
+    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
+        return eventService.getEventById(id)
+                .map(ResponseEntity::ok)
+                .orElse(ResponseEntity.notFound().build());
+    }
+
+    // ================= APPROVE EVENT =================
     @PutMapping("/{id}/approve")
-    @PreAuthorize("hasRole('ADMIN')")
-    public EventResponseDTO approve(@PathVariable Long id) {
-        return eventService.approveEvent(id);
+    public ResponseEntity<Event> approveEvent(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        String role = extractRole(authentication);
+        return ResponseEntity.ok(eventService.approveEvent(id, role));
     }
 
+    // ================= REJECT EVENT =================
     @PutMapping("/{id}/reject")
-    @PreAuthorize("hasRole('ADMIN')")
-    public EventResponseDTO reject(@PathVariable Long id) {
-        return eventService.rejectEvent(id);
+    public ResponseEntity<Event> rejectEvent(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        String role = extractRole(authentication);
+        return ResponseEntity.ok(eventService.rejectEvent(id, role));
+    }
+
+    // ================= HELPER =================
+    private String extractRole(Authentication authentication) {
+        return authentication.getAuthorities()
+                .stream()
+                .map(GrantedAuthority::getAuthority)
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Role not found"));
     }
 }

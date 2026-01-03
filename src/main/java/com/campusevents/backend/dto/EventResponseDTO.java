@@ -13,14 +13,24 @@ import java.time.LocalDateTime;
 public class EventResponseDTO {
 
     private Long id;
+
     private String title;
+
     private String description;
+
     private String category;
+
     private String organizerName;
+
     private String location;
+
     private LocalDateTime startTime;
+
     private LocalDateTime endTime;
+
     private Boolean isPublic;
+
     private EventStatus status;
+
     private String createdByEmail;
 }

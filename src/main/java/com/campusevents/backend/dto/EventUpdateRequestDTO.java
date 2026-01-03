@@ -1,7 +1,5 @@
 package com.campusevents.backend.dto;
 
-import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotNull;
 import lombok.*;
 
 import java.time.LocalDateTime;
@@ -10,30 +8,14 @@ import java.time.LocalDateTime;
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
-
 @Builder
-public class CreateEventRequestDTO {
+public class EventUpdateRequestDTO {
 
-    @Builder.Default
-    private Boolean isPublic = true;
-
-    @NotBlank
     private String title;
-
     private String description;
-
-    @NotBlank
     private String category;
-
-    @NotBlank
-    private String organizerName;
-
-    @NotBlank
     private String location;
-
-    @NotNull
     private LocalDateTime startTime;
-
-    @NotNull
     private LocalDateTime endTime;
+    private Boolean isPublic;
 }
