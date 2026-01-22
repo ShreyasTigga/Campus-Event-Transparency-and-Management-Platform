@@ -1,15 +1,18 @@
 package com.campusevents.backend.controller;
 
+import com.campusevents.backend.dto.CreateEventRequestDTO;
+import com.campusevents.backend.dto.EventResponseDTO;
 import com.campusevents.backend.model.Event;
 import com.campusevents.backend.service.EventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/events")
@@ -18,60 +21,132 @@ public class EventController {
 
     private final EventService eventService;
 
-    // ================= CREATE EVENT =================
+    // ==========================
+    // CREATE EVENT (Any logged-in user)
+    // ==========================
     @PostMapping
-    public ResponseEntity<Event> createEvent(
-            @RequestBody Event event,
+    @PreAuthorize("hasAnyRole('STUDENT','FACULTY','ADMIN')")
+    public ResponseEntity<EventResponseDTO> createEvent(
+            @RequestBody CreateEventRequestDTO request,
             Authentication authentication
     ) {
+
         String email = authentication.getName();
-        String role = extractRole(authentication);
+        String role = authentication.getAuthorities()
+                .iterator()
+                .next()
+                .getAuthority()
+                .replace("ROLE_", "");
 
-        Event savedEvent = eventService.createEvent(event, email, role);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedEvent);
+        Event event = Event.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .category(request.getCategory())
+                .organizerName(request.getOrganizerName())
+                .location(request.getLocation())
+                .startTime(request.getStartTime())
+                .endTime(request.getEndTime())
+                .isPublic(request.getIsPublic())
+                .build();
+
+        Event saved = eventService.createEvent(event, email, role);
+
+        return ResponseEntity
+                .status(HttpStatus.CREATED)
+                .body(toDTO(saved));
     }
 
-    // ================= GET ALL EVENTS =================
+    // ==========================
+    // VIEW EVENTS (All users)
+    // ==========================
     @GetMapping
-    public ResponseEntity<List<Event>> getAllEvents(Authentication authentication) {
-        String role = extractRole(authentication);
-        return ResponseEntity.ok(eventService.getAllEvents(role));
+    @PreAuthorize("hasAnyRole('STUDENT','FACULTY','ADMIN')")
+    public ResponseEntity<List<EventResponseDTO>> getAllEvents(
+            Authentication authentication
+    ) {
+
+        String role = authentication.getAuthorities()
+                .iterator()
+                .next()
+                .getAuthority()
+                .replace("ROLE_", "");
+
+        List<EventResponseDTO> events = eventService.getAllEvents(role)
+                .stream()
+                .map(this::toDTO)
+                .collect(Collectors.toList());
+
+        return ResponseEntity.ok(events);
     }
 
-    // ================= GET EVENT BY ID =================
+    // ==========================
+    // GET EVENT BY ID
+    // ==========================
     @GetMapping("/{id}")
-    public ResponseEntity<Event> getEventById(@PathVariable Long id) {
+    @PreAuthorize("hasAnyRole('STUDENT','FACULTY','ADMIN')")
+    public ResponseEntity<EventResponseDTO> getEventById(@PathVariable Long id) {
+
         return eventService.getEventById(id)
-                .map(ResponseEntity::ok)
+                .map(event -> ResponseEntity.ok(toDTO(event)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
-    // ================= APPROVE EVENT =================
+    // ==========================
+    // APPROVE EVENT (ADMIN ONLY)
+    // ==========================
     @PutMapping("/{id}/approve")
-    public ResponseEntity<Event> approveEvent(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EventResponseDTO> approveEvent(
             @PathVariable Long id,
             Authentication authentication
     ) {
-        String role = extractRole(authentication);
-        return ResponseEntity.ok(eventService.approveEvent(id, role));
+
+        String role = authentication.getAuthorities()
+                .iterator()
+                .next()
+                .getAuthority()
+                .replace("ROLE_", "");
+
+        Event approved = eventService.approveEvent(id, role);
+        return ResponseEntity.ok(toDTO(approved));
     }
 
-    // ================= REJECT EVENT =================
+    // ==========================
+    // REJECT EVENT (ADMIN ONLY)
+    // ==========================
     @PutMapping("/{id}/reject")
-    public ResponseEntity<Event> rejectEvent(
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<EventResponseDTO> rejectEvent(
             @PathVariable Long id,
             Authentication authentication
     ) {
-        String role = extractRole(authentication);
-        return ResponseEntity.ok(eventService.rejectEvent(id, role));
+
+        String role = authentication.getAuthorities()
+                .iterator()
+                .next()
+                .getAuthority()
+                .replace("ROLE_", "");
+
+        Event rejected = eventService.rejectEvent(id, role);
+        return ResponseEntity.ok(toDTO(rejected));
     }
 
-    // ================= HELPER =================
-    private String extractRole(Authentication authentication) {
-        return authentication.getAuthorities()
-                .stream()
-                .map(GrantedAuthority::getAuthority)
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Role not found"));
+    // ==========================
+    // MAPPER
+    // ==========================
+    private EventResponseDTO toDTO(Event event) {
+        return EventResponseDTO.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .description(event.getDescription())
+                .category(event.getCategory())
+                .organizerName(event.getOrganizerName())
+                .location(event.getLocation())
+                .startTime(event.getStartTime())
+                .endTime(event.getEndTime())
+                .isPublic(event.getIsPublic())
+                .status(event.getStatus())
+                .createdByEmail(event.getCreatedByEmail())
+                .build();
     }
 }
