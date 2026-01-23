@@ -1,19 +1,31 @@
 package com.campusevents.backend.service;
 
-import com.campusevents.backend.model.Event;
-
-import java.util.List;
-import java.util.Optional;
+import com.campusevents.backend.dto.CreateEventRequestDTO;
+import com.campusevents.backend.dto.EventResponseDTO;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 public interface EventService {
 
-    Event createEvent(Event event, String creatorEmail, String role);
+    EventResponseDTO createEvent(
+            CreateEventRequestDTO request,
+            String creatorEmail,
+            String role
+    );
 
-    List<Event> getAllEvents(String role);
+    Page<EventResponseDTO> getEvents(
+            String role,
+            String email,
+            Pageable pageable
+    );
 
-    Optional<Event> getEventById(Long id);
+    EventResponseDTO getEventById(
+            Long id,
+            String role,
+            String email
+    );
 
-    Event approveEvent(Long eventId, String role);
+    EventResponseDTO approveEvent(Long eventId, String role);
 
-    Event rejectEvent(Long eventId, String role);
+    EventResponseDTO rejectEvent(Long eventId, String role);
 }

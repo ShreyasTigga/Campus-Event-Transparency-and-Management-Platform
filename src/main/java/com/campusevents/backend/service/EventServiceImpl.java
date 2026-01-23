@@ -1,15 +1,16 @@
 package com.campusevents.backend.service;
 
+import com.campusevents.backend.dto.CreateEventRequestDTO;
+import com.campusevents.backend.dto.EventResponseDTO;
 import com.campusevents.backend.exception.AccessDeniedException;
 import com.campusevents.backend.exception.ResourceNotFoundException;
 import com.campusevents.backend.model.Event;
 import com.campusevents.backend.model.EventStatus;
 import com.campusevents.backend.repository.EventRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
-import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -17,83 +18,113 @@ public class EventServiceImpl implements EventService {
 
     private final EventRepository eventRepository;
 
-    // ======================
-    // CREATE EVENT
-    // ======================
     @Override
-    public Event createEvent(Event event, String creatorEmail, String role) {
+    public EventResponseDTO createEvent(
+            CreateEventRequestDTO request,
+            String creatorEmail,
+            String role
+    ) {
+        Event event = Event.builder()
+                .title(request.getTitle())
+                .description(request.getDescription())
+                .category(request.getCategory())
+                .organizerName(request.getOrganizerName())
+                .location(request.getLocation())
+                .startTime(request.getStartTime())
+                .endTime(request.getEndTime())
+                .isPublic(request.getIsPublic())
+                .createdByEmail(creatorEmail)
+                .status(EventStatus.PENDING)
+                .build();
 
-        // Only authenticated users can create
-        if (role == null || role.isBlank()) {
-            throw new AccessDeniedException("Unauthorized to create event");
+        return mapToDTO(eventRepository.save(event));
+    }
+
+    @Override
+    public Page<EventResponseDTO> getEvents(
+            String role,
+            String email,
+            Pageable pageable
+    ) {
+        Page<Event> events;
+
+        if (role.equals("ADMIN")) {
+            events = eventRepository.findAll(pageable);
+        } else {
+            events = eventRepository.findByStatusAndIsPublicTrue(
+                    EventStatus.APPROVED,
+                    pageable
+            );
         }
 
-        event.setId(null); // ensure new record
-        event.setCreatedByEmail(creatorEmail);
-        event.setStatus(EventStatus.PENDING); // Always pending approval
-
-        return eventRepository.save(event);
+        return events.map(this::mapToDTO);
     }
 
-    // ======================
-    // GET ALL EVENTS
-    // ======================
     @Override
-    public List<Event> getAllEvents(String role) {
+    public EventResponseDTO getEventById(
+            Long id,
+            String role,
+            String email
+    ) {
+        Event event = eventRepository.findById(id)
+                .orElseThrow(() ->
+                        new ResourceNotFoundException("Event not found")
+                );
 
-        // ADMIN can see everything
-        if ("ADMIN".equalsIgnoreCase(role)) {
-            return eventRepository.findAll();
+        if (!role.equals("ADMIN")) {
+            if (!event.getIsPublic() ||
+                    event.getStatus() != EventStatus.APPROVED) {
+                throw new AccessDeniedException("You cannot view this event");
+            }
         }
 
-        // Non-admins see only PUBLIC + APPROVED events
-        return eventRepository
-                .findByIsPublicTrueAndStatus(EventStatus.APPROVED);
+        return mapToDTO(event);
     }
 
-    // ======================
-    // GET EVENT BY ID
-    // ======================
     @Override
-    public Optional<Event> getEventById(Long id) {
-        return eventRepository.findById(id);
-    }
-
-    // ======================
-    // APPROVE EVENT (ADMIN ONLY)
-    // ======================
-    @Override
-    public Event approveEvent(Long eventId, String role) {
-
-        if (!"ADMIN".equalsIgnoreCase(role)) {
-            throw new AccessDeniedException("Only ADMIN can approve events");
+    public EventResponseDTO approveEvent(Long eventId, String role) {
+        if (!role.equals("ADMIN")) {
+            throw new AccessDeniedException("Only admins can approve events");
         }
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Event not found with ID: " + eventId)
+                        new ResourceNotFoundException("Event not found")
                 );
 
         event.setStatus(EventStatus.APPROVED);
-        return eventRepository.save(event);
+        return mapToDTO(eventRepository.save(event));
     }
 
-    // ======================
-    // REJECT EVENT (ADMIN ONLY)
-    // ======================
     @Override
-    public Event rejectEvent(Long eventId, String role) {
-
-        if (!"ADMIN".equalsIgnoreCase(role)) {
-            throw new AccessDeniedException("Only ADMIN can reject events");
+    public EventResponseDTO rejectEvent(Long eventId, String role) {
+        if (!role.equals("ADMIN")) {
+            throw new AccessDeniedException("Only admins can reject events");
         }
 
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() ->
-                        new ResourceNotFoundException("Event not found with ID: " + eventId)
+                        new ResourceNotFoundException("Event not found")
                 );
 
         event.setStatus(EventStatus.REJECTED);
-        return eventRepository.save(event);
+        return mapToDTO(eventRepository.save(event));
+    }
+
+    // 🔁 Mapper
+    private EventResponseDTO mapToDTO(Event event) {
+        return EventResponseDTO.builder()
+                .id(event.getId())
+                .title(event.getTitle())
+                .description(event.getDescription())
+                .category(event.getCategory())
+                .organizerName(event.getOrganizerName())
+                .location(event.getLocation())
+                .startTime(event.getStartTime())
+                .endTime(event.getEndTime())
+                .isPublic(event.getIsPublic())
+                .status(event.getStatus())
+                .createdByEmail(event.getCreatedByEmail())
+                .build();
     }
 }
