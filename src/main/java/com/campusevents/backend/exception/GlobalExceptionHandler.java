@@ -113,4 +113,20 @@ public class GlobalExceptionHandler {
                 request
         );
     }
+
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<ApiError> handleGeneric(Exception ex, HttpServletRequest request) {
+        ex.printStackTrace(); // 🔥 This helps you debug fast
+
+        ApiError error = new ApiError(
+                request.getRequestURI(),
+                "Internal Server Error",
+                ex.getMessage(), // show real error in dev
+                LocalDateTime.now(),
+                500
+        );
+
+        return ResponseEntity.status(500).body(error);
+    }
+
 }
