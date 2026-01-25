@@ -5,20 +5,34 @@ import { getEvents } from "../services/api";
 import { useAuth } from "../context/AuthContext";
 import Navbar from "../components/Navbar";
 import EventCard from "../components/EventCard";
+import { useRouter } from "next/navigation";
 
 export default function Dashboard() {
   const { token } = useAuth();
+  const router = useRouter();
   const [events, setEvents] = useState<any[]>([]);
   const [page, setPage] = useState(0);
 
   async function loadEvents() {
-    const res = await getEvents(token!, page, 6);
-    setEvents(res.content || res);
+    console.log("JWT Token:", token);
+
+    if (!token) {
+      console.error("No token found — redirecting to login");
+      router.push("/login");
+      return;
+    }
+
+    try {
+      const res = await getEvents(token, page, 6);
+      setEvents(res.content || res);
+    } catch (err) {
+      console.error("Failed to load events:", err);
+    }
   }
 
   useEffect(() => {
     loadEvents();
-  }, [page]);
+  }, [page, token]);
 
   return (
     <div>

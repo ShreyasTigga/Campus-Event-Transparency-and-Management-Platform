@@ -23,7 +23,7 @@ export async function register(data: any) {
 }
 
 export async function getEvents(token: string, page = 0, size = 6) {
-  const res = await fetch(`${API_BASE}/events?page=${page}&size=${size}`, {
+  const res = await fetch(`${API_BASE}/api/events?page=${page}&size=${size}`, {
     headers: {
       Authorization: `Bearer ${token}`
     }

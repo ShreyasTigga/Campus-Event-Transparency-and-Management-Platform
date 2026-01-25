@@ -1,40 +1,38 @@
 "use client";
 
-import { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useEffect, useState } from "react";
 
-interface AuthContextType {
+type AuthContextType = {
   token: string | null;
-  role: string | null;
-  login: (token: string, role: string) => void;
+  login: (jwt: string) => void;
   logout: () => void;
-}
+};
 
 const AuthContext = createContext<AuthContextType | null>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
-  const [role, setRole] = useState<string | null>(null);
 
+  // Load token on app start
   useEffect(() => {
-    setToken(localStorage.getItem("token"));
-    setRole(localStorage.getItem("role"));
+    const saved = localStorage.getItem("token");
+    if (saved) {
+      setToken(saved);
+    }
   }, []);
 
-  function login(token: string, role: string) {
-    localStorage.setItem("token", token);
-    localStorage.setItem("role", role);
-    setToken(token);
-    setRole(role);
+  function login(jwt: string) {
+    localStorage.setItem("token", jwt);
+    setToken(jwt);
   }
 
   function logout() {
-    localStorage.clear();
+    localStorage.removeItem("token");
     setToken(null);
-    setRole(null);
   }
 
   return (
-    <AuthContext.Provider value={{ token, role, login, logout }}>
+    <AuthContext.Provider value={{ token, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
@@ -42,6 +40,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
 export function useAuth() {
   const ctx = useContext(AuthContext);
-  if (!ctx) throw new Error("AuthContext missing");
+  if (!ctx) throw new Error("useAuth must be used inside AuthProvider");
   return ctx;
 }

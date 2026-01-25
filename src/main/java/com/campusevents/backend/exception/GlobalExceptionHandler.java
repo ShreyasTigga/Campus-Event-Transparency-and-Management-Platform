@@ -3,7 +3,6 @@ package com.campusevents.backend.exception;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -14,119 +13,49 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // ================== GENERIC ERROR RESPONSE BUILDER ==================
-    private ResponseEntity<Map<String, Object>> buildResponse(
-            HttpStatus status,
-            String message,
-            HttpServletRequest request
-    ) {
+    // 400 - Bad Request
+    @ExceptionHandler({
+            EmailAlreadyExistsException.class,
+            InvalidCredentialsException.class
+    })
+    public ResponseEntity<Object> handleBadRequest(RuntimeException ex, HttpServletRequest request) {
+        return buildErrorResponse(ex.getMessage(), request.getRequestURI(), HttpStatus.BAD_REQUEST);
+    }
+
+    // 403 - Forbidden
+    @ExceptionHandler(AccessDeniedException.class)
+    public ResponseEntity<Object> handleForbidden(AccessDeniedException ex, HttpServletRequest request) {
+        return buildErrorResponse(ex.getMessage(), request.getRequestURI(), HttpStatus.FORBIDDEN);
+    }
+
+    // 404 - Not Found
+    @ExceptionHandler({
+            UserNotFoundException.class,
+            ResourceNotFoundException.class
+    })
+    public ResponseEntity<Object> handleNotFound(RuntimeException ex, HttpServletRequest request) {
+        return buildErrorResponse(ex.getMessage(), request.getRequestURI(), HttpStatus.NOT_FOUND);
+    }
+
+    // 500 - Internal Server Error (ONLY ONE GENERIC HANDLER)
+    @ExceptionHandler(Exception.class)
+    public ResponseEntity<Object> handleInternal(Exception ex, HttpServletRequest request) {
+        return buildErrorResponse(
+                "Something went wrong. Please contact support.",
+                request.getRequestURI(),
+                HttpStatus.INTERNAL_SERVER_ERROR
+        );
+    }
+
+    // 🔧 Central response builder
+    private ResponseEntity<Object> buildErrorResponse(String message, String path, HttpStatus status) {
         Map<String, Object> body = new HashMap<>();
         body.put("timestamp", LocalDateTime.now());
         body.put("status", status.value());
         body.put("error", status.getReasonPhrase());
         body.put("message", message);
-        body.put("path", request.getRequestURI());
+        body.put("path", path);
 
-        return new ResponseEntity<>(body, status);
+        return ResponseEntity.status(status).body(body);
     }
-
-    // ================== 400 - VALIDATION ERRORS ==================
-    @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<Map<String, Object>> handleValidationErrors(
-            MethodArgumentNotValidException ex,
-            HttpServletRequest request
-    ) {
-        Map<String, String> fieldErrors = new HashMap<>();
-        ex.getBindingResult().getFieldErrors()
-                .forEach(error ->
-                        fieldErrors.put(error.getField(), error.getDefaultMessage())
-                );
-
-        return buildResponse(
-                HttpStatus.BAD_REQUEST,
-                fieldErrors.toString(),
-                request
-        );
-    }
-
-    // ================== 404 - RESOURCE NOT FOUND ==================
-    @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<Map<String, Object>> handleNotFound(
-            ResourceNotFoundException ex,
-            HttpServletRequest request
-    ) {
-        return buildResponse(
-                HttpStatus.NOT_FOUND,
-                ex.getMessage(),
-                request
-        );
-    }
-
-    // ================== 409 - EMAIL EXISTS ==================
-    @ExceptionHandler(EmailAlreadyExistsException.class)
-    public ResponseEntity<Map<String, Object>> handleEmailExists(
-            EmailAlreadyExistsException ex,
-            HttpServletRequest request
-    ) {
-        return buildResponse(
-                HttpStatus.CONFLICT,
-                ex.getMessage(),
-                request
-        );
-    }
-
-    // ================== 401 - INVALID CREDENTIALS ==================
-    @ExceptionHandler(InvalidCredentialsException.class)
-    public ResponseEntity<Map<String, Object>> handleInvalidCredentials(
-            InvalidCredentialsException ex,
-            HttpServletRequest request
-    ) {
-        return buildResponse(
-                HttpStatus.UNAUTHORIZED,
-                ex.getMessage(),
-                request
-        );
-    }
-
-    // ================== 403 - ACCESS DENIED ==================
-    @ExceptionHandler(AccessDeniedException.class)
-    public ResponseEntity<Map<String, Object>> handleAccessDenied(
-            AccessDeniedException ex,
-            HttpServletRequest request
-    ) {
-        return buildResponse(
-                HttpStatus.FORBIDDEN,
-                ex.getMessage(),
-                request
-        );
-    }
-
-    // ================== 500 - FALLBACK ==================
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<Map<String, Object>> handleAll(
-            Exception ex,
-            HttpServletRequest request
-    ) {
-        return buildResponse(
-                HttpStatus.INTERNAL_SERVER_ERROR,
-                "Something went wrong. Please contact support.",
-                request
-        );
-    }
-
-    @ExceptionHandler(Exception.class)
-    public ResponseEntity<ApiError> handleGeneric(Exception ex, HttpServletRequest request) {
-        ex.printStackTrace(); // 🔥 This helps you debug fast
-
-        ApiError error = new ApiError(
-                request.getRequestURI(),
-                "Internal Server Error",
-                ex.getMessage(), // show real error in dev
-                LocalDateTime.now(),
-                500
-        );
-
-        return ResponseEntity.status(500).body(error);
-    }
-
 }
