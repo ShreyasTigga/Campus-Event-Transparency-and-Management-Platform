@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { register } from "../services/api";
+import { register } from "../../services/api";
 import { useRouter } from "next/navigation";
 
 export default function RegisterPage() {
@@ -9,15 +9,20 @@ export default function RegisterPage() {
     name: "",
     email: "",
     password: "",
-    role: "STUDENT"
+    role: "STUDENT",
   });
 
   const router = useRouter();
 
   async function handleSubmit(e: any) {
     e.preventDefault();
-    await register(form);
-    router.push("/login");
+
+    try {
+      await register(form);
+      router.push("/login");
+    } catch (err: any) {
+      alert(err.message || "Registration failed");
+    }
   }
 
   return (
@@ -28,14 +33,14 @@ export default function RegisterPage() {
       >
         <h2 className="text-xl mb-4">Register</h2>
 
-        {["name", "email", "password"].map(field => (
+        {["name", "email", "password"].map((field) => (
           <input
             key={field}
             placeholder={field}
             type={field === "password" ? "password" : "text"}
             className="border w-full mb-2 p-2"
             value={(form as any)[field]}
-            onChange={e =>
+            onChange={(e) =>
               setForm({ ...form, [field]: e.target.value })
             }
           />
@@ -44,10 +49,11 @@ export default function RegisterPage() {
         <select
           className="border w-full mb-2 p-2"
           value={form.role}
-          onChange={e => setForm({ ...form, role: e.target.value })}
+          onChange={(e) => setForm({ ...form, role: e.target.value })}
         >
           <option value="STUDENT">Student</option>
           <option value="ORGANIZER">Organizer</option>
+          <option value="ADMIN">Admin</option>
         </select>
 
         <button className="bg-green-500 text-white w-full py-2 rounded">

@@ -7,12 +7,14 @@ export default function EventCard({ event, reload }: any) {
   const { token, role } = useAuth();
 
   async function handleApprove() {
-    await approveEvent(event.id, token!);
+    if (!token) return;
+    await approveEvent(event.id, token);
     reload();
   }
 
   async function handleReject() {
-    await rejectEvent(event.id, token!);
+    if (!token) return;
+    await rejectEvent(event.id, token);
     reload();
   }
 

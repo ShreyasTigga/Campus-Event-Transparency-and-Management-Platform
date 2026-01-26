@@ -1,8 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { login as apiLogin } from "../services/api";
-import { useAuth } from "../context/AuthContext";
+import { login as apiLogin } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -14,12 +14,13 @@ export default function LoginPage() {
   async function handleSubmit(e: any) {
     e.preventDefault();
 
-    const res = await apiLogin(email, password);
-
-    console.log("JWT Token:", res.token); // 🔍 DEBUG LINE
-
-    login(res.token); // ✅ CORRECT
-    router.push("/dashboard");
+    try {
+      const res = await apiLogin(email, password);
+      login(res.token);
+      router.push("/dashboard");
+    } catch (err: any) {
+      alert(err.message || "Login failed");
+    }
   }
 
   return (
@@ -34,7 +35,7 @@ export default function LoginPage() {
           placeholder="Email"
           className="border w-full mb-2 p-2"
           value={email}
-          onChange={e => setEmail(e.target.value)}
+          onChange={(e) => setEmail(e.target.value)}
         />
 
         <input
@@ -42,7 +43,7 @@ export default function LoginPage() {
           placeholder="Password"
           className="border w-full mb-2 p-2"
           value={password}
-          onChange={e => setPassword(e.target.value)}
+          onChange={(e) => setPassword(e.target.value)}
         />
 
         <button className="bg-blue-500 text-white w-full py-2 rounded">
