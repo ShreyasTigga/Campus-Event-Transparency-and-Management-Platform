@@ -1,0 +1,53 @@
+version: "3.9"
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: campus-mysql
+    restart: always
+    environment:
+      MYSQL_DATABASE: campus_events_db
+      MYSQL_USER: campus_app
+      MYSQL_PASSWORD: Campus@123
+      MYSQL_ROOT_PASSWORD: root
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      retries: 5
+
+  backend:
+    build: .
+    container_name: campus-backend
+    restart: always
+    depends_on:
+      mysql:
+        condition: service_healthy
+    ports:
+      - "8081:8081"
+    environment:
+      SPRING_PROFILES_ACTIVE: dev
+    networks:
+      - campus-net
+
+  frontend:
+    build: ./campus-events-frontend
+    container_name: campus-frontend
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      NEXT_PUBLIC_API_BASE: http://backend:8081/api
+    depends_on:
+      - backend
+    networks:
+      - campus-net
+
+volumes:
+  mysql_data:
+
+networks:
+  campus-net:
