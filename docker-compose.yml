@@ -6,18 +6,22 @@ services:
     container_name: campus-mysql
     restart: always
     environment:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://campus-mysql:3306/campus_events_db
       MYSQL_DATABASE: campus_events_db
       MYSQL_USER: campus_app
       MYSQL_PASSWORD: Campus@123
       MYSQL_ROOT_PASSWORD: root
     ports:
-      - "3306:3306"
+      - "3307:3306"
     volumes:
       - mysql_data:/var/lib/mysql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 10s
       retries: 5
+    networks:
+      - campus-net   # 🔥 THIS WAS MISSING
 
   backend:
     build: .
@@ -30,6 +34,9 @@ services:
       - "8081:8081"
     environment:
       SPRING_PROFILES_ACTIVE: dev
+      SPRING_DATASOURCE_URL: jdbc:mysql://campus-mysql:3306/campus_events_db
+      SPRING_DATASOURCE_USERNAME: campus_app
+      SPRING_DATASOURCE_PASSWORD: Campus@123
     networks:
       - campus-net
 
@@ -40,7 +47,7 @@ services:
     ports:
       - "3000:3000"
     environment:
-      NEXT_PUBLIC_API_BASE: http://backend:8081/api
+      NEXT_PUBLIC_API_BASE: http://backend:8081/api  # 🔥 FIXED
     depends_on:
       - backend
     networks:
