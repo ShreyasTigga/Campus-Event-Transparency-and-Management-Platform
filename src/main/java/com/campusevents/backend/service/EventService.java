@@ -27,5 +27,16 @@ public interface EventService {
 
     EventResponseDTO approveEvent(Long eventId, String role);
 
-    EventResponseDTO rejectEvent(Long eventId, String role);
+    EventResponseDTO rejectEvent(Long eventId, String role, String comment);
+
+    EventResponseDTO updateEvent(
+            Long eventId,
+            CreateEventRequestDTO request,
+            String email,
+            String role
+    );
+
+    void deleteEvent(Long eventId, String email, String role);
+
+    public void enrollInEvent(Long eventId, String email, String role);
 }

@@ -66,11 +66,52 @@ public class EventController {
     @PostMapping("/{id}/reject")
     public EventResponseDTO rejectEvent(
             @PathVariable Long id,
-            Authentication authentication
+            Authentication authentication,
+            @RequestParam String comment
     ) {
         return eventService.rejectEvent(
                 id,
+                authentication.getAuthorities().iterator().next().getAuthority(),
+                comment
+        );
+    }
+
+    @PutMapping("/{id}")
+    public EventResponseDTO updateEvent(
+            @PathVariable Long id,
+            @RequestBody CreateEventRequestDTO request,
+            Authentication authentication
+    ) {
+        return eventService.updateEvent(
+                id,
+                request,
+                authentication.getName(),
                 authentication.getAuthorities().iterator().next().getAuthority()
         );
     }
+
+    @DeleteMapping("/{id}")
+    public void deleteEvent(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        eventService.deleteEvent(
+                id,
+                authentication.getName(),
+                authentication.getAuthorities().iterator().next().getAuthority()
+        );
+    }
+
+    @PostMapping("/{id}/enroll")
+    public void enroll(
+            @PathVariable Long id,
+            Authentication authentication
+    ) {
+        eventService.enrollInEvent(
+                id,
+                authentication.getName(),
+                authentication.getAuthorities().iterator().next().getAuthority()
+        );
+    }
+
 }

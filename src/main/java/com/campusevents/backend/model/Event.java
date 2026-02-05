@@ -45,4 +45,6 @@ public class Event {
     @Enumerated(EnumType.STRING)
     @Builder.Default
     private EventStatus status = EventStatus.PENDING;
+
+    private String adminComment;
 }
