@@ -37,6 +37,7 @@ services:
       SPRING_DATASOURCE_URL: jdbc:mysql://campus-mysql:3306/campus_events_db
       SPRING_DATASOURCE_USERNAME: campus_app
       SPRING_DATASOURCE_PASSWORD: Campus@123
+      JWT_SECRET: super-strong-production-secret-key-123456789
     networks:
       - campus-net
 

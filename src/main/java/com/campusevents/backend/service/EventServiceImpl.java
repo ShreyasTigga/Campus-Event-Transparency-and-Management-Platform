@@ -197,9 +197,10 @@ public class EventServiceImpl implements EventService {
             throw new AccessDeniedException("Event not approved");
         }
 
-        if (enrollmentRepository.existsByStudentEmailAndEventId(email, eventId)) {
-            throw new RuntimeException("Already enrolled");
+        if (enrollmentRepository.existsByStudentEmailAndEvent(email, event)) {
+            throw new AccessDeniedException("Already enrolled in this event");
         }
+
 
         Enrollment enrollment = Enrollment.builder()
                 .studentEmail(email)
