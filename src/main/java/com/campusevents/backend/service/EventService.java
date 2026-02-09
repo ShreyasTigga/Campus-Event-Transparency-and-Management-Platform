@@ -4,6 +4,7 @@ import com.campusevents.backend.dto.CreateEventRequestDTO;
 import com.campusevents.backend.dto.EventResponseDTO;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import com.campusevents.backend.dto.EnrollmentResponseDTO;
 
 public interface EventService {
 
@@ -39,4 +40,11 @@ public interface EventService {
     void deleteEvent(Long eventId, String email, String role);
 
     public void enrollInEvent(Long eventId, String email, String role);
+
+    Page<EnrollmentResponseDTO> getEnrollments(
+            Long eventId,
+            String email,
+            String role,
+            Pageable pageable
+    );
 }

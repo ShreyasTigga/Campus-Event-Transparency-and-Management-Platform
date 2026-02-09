@@ -3,6 +3,7 @@ package com.campusevents.backend.model;
 import jakarta.persistence.*;
 import lombok.*;
 import com.campusevents.backend.model.Event;
+import java.time.LocalDateTime;
 
 @Entity
 @Table(
@@ -28,4 +29,8 @@ public class Enrollment {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "event_id")
     private Event event;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private LocalDateTime enrolledAt = LocalDateTime.now();
 }

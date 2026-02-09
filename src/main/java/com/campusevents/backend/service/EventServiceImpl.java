@@ -9,6 +9,7 @@ import com.campusevents.backend.model.EventStatus;
 import com.campusevents.backend.model.Enrollment;
 import com.campusevents.backend.repository.EventRepository;
 import com.campusevents.backend.repository.EnrollmentRepository;
+import com.campusevents.backend.dto.EnrollmentResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -209,6 +210,39 @@ public class EventServiceImpl implements EventService {
 
         enrollmentRepository.save(enrollment);
     }
+
+    @Override
+    public Page<EnrollmentResponseDTO> getEnrollments(
+            Long eventId,
+            String email,
+            String role,
+            Pageable pageable
+    ) {
+
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
+
+        // ADMIN can see all
+        if (!role.equals("ADMIN") && !role.equals("ORGANIZER")) {
+            throw new AccessDeniedException("Only organizer or admin can view enrollments");
+        }
+
+        // ORGANIZER can only see their own event enrollments
+        if (role.equals("ORGANIZER") &&
+                !event.getCreatedByEmail().equals(email)) {
+            throw new AccessDeniedException("Not your event");
+        }
+
+        return enrollmentRepository
+                .findByEventId(eventId, pageable)
+                .map(enrollment ->
+                        EnrollmentResponseDTO.builder()
+                                .id(enrollment.getId())
+                                .studentEmail(enrollment.getStudentEmail())
+                                .build()
+                );
+    }
+
 
     // 🔁 Mapper
     private EventResponseDTO mapToDTO(Event event) {

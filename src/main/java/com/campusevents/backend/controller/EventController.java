@@ -3,6 +3,7 @@ package com.campusevents.backend.controller;
 import com.campusevents.backend.dto.CreateEventRequestDTO;
 import com.campusevents.backend.dto.EventResponseDTO;
 import com.campusevents.backend.service.EventService;
+import com.campusevents.backend.dto.EnrollmentResponseDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -113,5 +114,20 @@ public class EventController {
                 authentication.getAuthorities().iterator().next().getAuthority()
         );
     }
+
+    @GetMapping("/{id}/enrollments")
+    public Page<EnrollmentResponseDTO> getEnrollments(
+            @PathVariable Long id,
+            Pageable pageable,
+            Authentication authentication
+    ) {
+        return eventService.getEnrollments(
+                id,
+                authentication.getName(),
+                authentication.getAuthorities().iterator().next().getAuthority(),
+                pageable
+        );
+    }
+
 
 }

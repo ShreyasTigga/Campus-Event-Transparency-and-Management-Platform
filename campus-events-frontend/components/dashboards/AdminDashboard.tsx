@@ -1,31 +1,61 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import api from "../../services/api";
+
 export default function AdminDashboard() {
-  return (
-    <div className="p-8">
-      <h1 className="text-4xl font-bold mb-6">🛡️ Admin Dashboard</h1>
+  const [events, setEvents] = useState([]);
 
-      <div className="grid md:grid-cols-3 gap-6">
-        <Card
-          title="Pending Approvals"
-          desc="Review and approve/reject submitted events"
-        />
-        <Card
-          title="System Overview"
-          desc="Monitor users and platform activity"
-        />
-        <Card
-          title="Audit Logs"
-          desc="View event approval and enrollment history"
-        />
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  async function fetchEvents() {
+    const res = await api.get("/events");
+    setEvents(res.data.content);
+  }
+
+  async function approve(id: number) {
+    await api.post(`/events/${id}/approve`);
+    fetchEvents();
+  }
+
+  async function reject(id: number) {
+    const comment = prompt("Reason for rejection:");
+    await api.post(`/events/${id}/reject?comment=${comment}`);
+    fetchEvents();
+  }
+
+  return (
+    <div className="p-8 text-white">
+      <h2 className="text-3xl font-bold mb-6">Admin Panel</h2>
+
+      <div className="grid gap-6">
+        {events.map((event: any) => (
+          <div key={event.id} className="bg-slate-800 p-6 rounded-xl">
+            <h3 className="text-xl font-semibold">{event.title}</h3>
+            <p>Status: {event.status}</p>
+
+            {event.status === "PENDING" && (
+              <div className="flex gap-4 mt-4">
+                <button
+                  onClick={() => approve(event.id)}
+                  className="bg-green-600 px-4 py-2 rounded"
+                >
+                  Approve
+                </button>
+
+                <button
+                  onClick={() => reject(event.id)}
+                  className="bg-red-600 px-4 py-2 rounded"
+                >
+                  Reject
+                </button>
+              </div>
+            )}
+          </div>
+        ))}
       </div>
-    </div>
-  );
-}
-
-function Card({ title, desc }: { title: string; desc: string }) {
-  return (
-    <div className="bg-white/10 backdrop-blur-lg p-6 rounded-xl border border-white/10 hover:border-red-500 transition">
-      <h2 className="text-xl font-semibold mb-2">{title}</h2>
-      <p className="text-white/70">{desc}</p>
     </div>
   );
 }

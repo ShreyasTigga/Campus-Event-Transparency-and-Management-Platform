@@ -1,27 +1,55 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import api from "../../services/api";
+
 export default function StudentDashboard() {
-  return (
-    <div className="p-8">
-      <h1 className="text-4xl font-bold mb-6">🎓 Student Dashboard</h1>
+  const [events, setEvents] = useState([]);
 
-      <div className="grid md:grid-cols-2 gap-6">
-        <Card
-          title="Available Events"
-          desc="Browse and enroll in approved campus events"
-        />
-        <Card
-          title="My Enrollments"
-          desc="View events you’ve registered for"
-        />
+  useEffect(() => {
+    fetchEvents();
+  }, []);
+
+  async function fetchEvents() {
+    try {
+      const res = await api.get("/events");
+      setEvents(res.data.content);
+    } catch (err) {
+      console.error(err);
+    }
+  }
+
+  async function enroll(eventId: number) {
+    try {
+      await api.post(`/events/${eventId}/enroll`);
+      alert("Enrolled successfully");
+    } catch (err: any) {
+      alert(err.response?.data?.message || "Enrollment failed");
+    }
+  }
+
+  return (
+    <div className="p-8 text-white">
+      <h2 className="text-3xl font-bold mb-6">Available Events</h2>
+
+      <div className="grid gap-6">
+        {events.map((event: any) => (
+          <div
+            key={event.id}
+            className="bg-slate-800 p-6 rounded-xl shadow"
+          >
+            <h3 className="text-xl font-semibold">{event.title}</h3>
+            <p className="text-gray-300">{event.description}</p>
+
+            <button
+              onClick={() => enroll(event.id)}
+              className="mt-4 bg-blue-600 px-4 py-2 rounded hover:bg-blue-700"
+            >
+              Enroll
+            </button>
+          </div>
+        ))}
       </div>
-    </div>
-  );
-}
-
-function Card({ title, desc }: { title: string; desc: string }) {
-  return (
-    <div className="bg-white/10 backdrop-blur-lg p-6 rounded-xl border border-white/10 hover:border-blue-500 transition">
-      <h2 className="text-xl font-semibold mb-2">{title}</h2>
-      <p className="text-white/70">{desc}</p>
     </div>
   );
 }
