@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import api from "../../services/api";
+import { getEvents, approveEvent, rejectEvent } from "../../services/api";
 
 export default function OrganizerDashboard() {
   const [events, setEvents] = useState([]);
@@ -10,10 +10,10 @@ export default function OrganizerDashboard() {
     fetchEvents();
   }, []);
 
-  async function fetchEvents() {
-    const res = await api.get("/events");
-    setEvents(res.data.content);
-  }
+async function fetchEvents() {
+  const res = await getEvents();
+  setEvents(res.content);
+}
 
   async function deleteEvent(id: number) {
     await api.delete(`/events/${id}`);

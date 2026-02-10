@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import api from "../../services/api";
+import { getEvents, approveEvent, rejectEvent } from "../../services/api";
 
 export default function StudentDashboard() {
   const [events, setEvents] = useState([]);
@@ -12,8 +12,8 @@ export default function StudentDashboard() {
 
   async function fetchEvents() {
     try {
-      const res = await api.get("/events");
-      setEvents(res.data.content);
+      const res = await getEvents();
+      setEvents(res.content);
     } catch (err) {
       console.error(err);
     }

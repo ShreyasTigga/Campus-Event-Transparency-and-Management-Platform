@@ -8,13 +8,13 @@ export default function EventCard({ event, reload }: any) {
 
   async function handleApprove() {
     if (!token) return;
-    await approveEvent(event.id, token);
+    await approveEvent(event.id);
     reload();
   }
 
   async function handleReject() {
     if (!token) return;
-    await rejectEvent(event.id, token);
+    await rejectEvent(event.id);
     reload();
   }
 

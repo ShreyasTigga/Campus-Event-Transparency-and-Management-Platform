@@ -1,8 +1,42 @@
 const API_BASE =
   process.env.NEXT_PUBLIC_API_BASE || "http://localhost:8081/api";
 
-async function request(url: string, options: RequestInit) {
-  const res = await fetch(url, options);
+/* ---------------------------------- */
+/* Helper: Get Token From Storage  */
+/* ---------------------------------- */
+function getToken() {
+  if (typeof window === "undefined") return null;
+  return localStorage.getItem("token");
+}
+
+/* ---------------------------------- */
+/* Core Request Wrapper            */
+/* ---------------------------------- */
+async function request(
+  endpoint: string,
+  options: RequestInit = {},
+  requiresAuth: boolean = false
+) {
+  const headers: HeadersInit = {
+    "Content-Type": "application/json",
+    ...(options.headers || {}),
+  };
+
+ if (requiresAuth) {
+   const token = getToken();
+
+   if (!token) {
+     throw new Error("Authentication required");
+   }
+
+   headers["Authorization"] = `Bearer ${token}`;
+ }
+
+
+  const res = await fetch(`${API_BASE}${endpoint}`, {
+    ...options,
+    headers,
+  });
 
   if (!res.ok) {
     const msg = await res.text();
@@ -12,44 +46,59 @@ async function request(url: string, options: RequestInit) {
   return res.json();
 }
 
+/* ---------------------------------- */
+/* AUTH APIs                       */
+/* ---------------------------------- */
 export function login(email: string, password: string) {
-  return request(`${API_BASE}/auth/login`, {
+  return request("/auth/login", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
   });
 }
 
 export function register(data: any) {
-  return request(`${API_BASE}/auth/register`, {
+  return request("/auth/register", {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
     body: JSON.stringify(data),
   });
 }
 
-export function getEvents(token: string, page = 0, size = 6) {
-  return request(`${API_BASE}/events?page=${page}&size=${size}`, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+/* ---------------------------------- */
+/* EVENTS APIs                     */
+/* ---------------------------------- */
+export function getEvents(page = 0, size = 6) {
+  return request(`/events?page=${page}&size=${size}`, {}, true);
 }
 
-export function approveEvent(id: number, token: string) {
-  return request(`${API_BASE}/events/${id}/approve`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export function approveEvent(id: number) {
+  return request(`/events/${id}/approve`, {
+    method: "POST",
+  }, true);
 }
 
-export function rejectEvent(id: number, token: string) {
-  return request(`${API_BASE}/events/${id}/reject`, {
-    method: "PUT",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-  });
+export function rejectEvent(id: number, comment?: string) {
+  return request(`/events/${id}/reject`, {
+    method: "POST",
+    body: JSON.stringify({ comment }),
+  }, true);
 }
+
+export function enrollInEvent(id: number) {
+  return request(`/events/${id}/enroll`, {
+    method: "POST",
+  }, true);
+}
+
+/* ---------------------------------- */
+/* DEFAULT EXPORT (IMPORTANT)      */
+/* ---------------------------------- */
+const api = {
+  login,
+  register,
+  getEvents,
+  approveEvent,
+  rejectEvent,
+  enrollInEvent,
+};
+
+export default api;

@@ -1,28 +1,34 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import api from "../../services/api";
+import { getEvents, approveEvent, rejectEvent } from "../../services/api";
+import { useAuth } from "../../context/AuthContext";
 
 export default function AdminDashboard() {
-  const [events, setEvents] = useState([]);
+  const { token } = useAuth();
+  const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
-    fetchEvents();
-  }, []);
+    if (token) {
+      fetchEvents();
+    }
+  }, [token]);
 
   async function fetchEvents() {
-    const res = await api.get("/events");
-    setEvents(res.data.content);
+    if (!token) return;
+    const res = await getEvents(token);
+    setEvents(res.content);
   }
 
   async function approve(id: number) {
-    await api.post(`/events/${id}/approve`);
+    if (!token) return;
+    await approveEvent(id, token);
     fetchEvents();
   }
 
   async function reject(id: number) {
-    const comment = prompt("Reason for rejection:");
-    await api.post(`/events/${id}/reject?comment=${comment}`);
+    if (!token) return;
+    await rejectEvent(id, token);
     fetchEvents();
   }
 
@@ -31,7 +37,7 @@ export default function AdminDashboard() {
       <h2 className="text-3xl font-bold mb-6">Admin Panel</h2>
 
       <div className="grid gap-6">
-        {events.map((event: any) => (
+        {events.map((event) => (
           <div key={event.id} className="bg-slate-800 p-6 rounded-xl">
             <h3 className="text-xl font-semibold">{event.title}</h3>
             <p>Status: {event.status}</p>
