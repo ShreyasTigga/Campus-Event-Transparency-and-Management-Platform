@@ -17,21 +17,17 @@ async function request(
   options: RequestInit = {},
   requiresAuth: boolean = false
 ) {
-  const headers: HeadersInit = {
-    "Content-Type": "application/json",
-    ...(options.headers || {}),
-  };
+const headers: Record<string, string> = {
+  "Content-Type": "application/json",
+  ...(options.headers as Record<string, string> || {}),
+};
 
- if (requiresAuth) {
-   const token = getToken();
-
-   if (!token) {
-     throw new Error("Authentication required");
-   }
-
-   headers["Authorization"] = `Bearer ${token}`;
- }
-
+if (requiresAuth) {
+  const token = getToken();
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+}
 
   const res = await fetch(`${API_BASE}${endpoint}`, {
     ...options,
@@ -89,6 +85,12 @@ export function enrollInEvent(id: number) {
   }, true);
 }
 
+export function deleteEvent(id: number) {
+  return request(`/events/${id}`, {
+    method: "DELETE",
+  }, true);
+}
+
 /* ---------------------------------- */
 /* DEFAULT EXPORT (IMPORTANT)      */
 /* ---------------------------------- */
@@ -99,6 +101,7 @@ const api = {
   approveEvent,
   rejectEvent,
   enrollInEvent,
+  deleteEvent,
 };
 
 export default api;

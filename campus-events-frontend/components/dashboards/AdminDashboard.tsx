@@ -2,33 +2,26 @@
 
 import { useEffect, useState } from "react";
 import { getEvents, approveEvent, rejectEvent } from "../../services/api";
-import { useAuth } from "../../context/AuthContext";
 
 export default function AdminDashboard() {
-  const { token } = useAuth();
   const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
-    if (token) {
-      fetchEvents();
-    }
-  }, [token]);
+    fetchEvents();
+  }, []);
 
   async function fetchEvents() {
-    if (!token) return;
-    const res = await getEvents(token);
+    const res = await getEvents();
     setEvents(res.content);
   }
 
   async function approve(id: number) {
-    if (!token) return;
-    await approveEvent(id, token);
+    await approveEvent(id);
     fetchEvents();
   }
 
   async function reject(id: number) {
-    if (!token) return;
-    await rejectEvent(id, token);
+    await rejectEvent(id);
     fetchEvents();
   }
 

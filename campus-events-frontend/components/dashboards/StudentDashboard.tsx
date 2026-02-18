@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getEvents, approveEvent, rejectEvent } from "../../services/api";
+import { getEvents, enrollInEvent } from "../../services/api";
 
 export default function StudentDashboard() {
   const [events, setEvents] = useState([]);
@@ -19,14 +19,14 @@ export default function StudentDashboard() {
     }
   }
 
-  async function enroll(eventId: number) {
-    try {
-      await api.post(`/events/${eventId}/enroll`);
-      alert("Enrolled successfully");
-    } catch (err: any) {
-      alert(err.response?.data?.message || "Enrollment failed");
-    }
+async function enroll(eventId: number) {
+  try {
+    await enrollInEvent(eventId);
+    alert("Enrolled successfully");
+  } catch (err: any) {
+    alert(err.message || "Enrollment failed");
   }
+}
 
   return (
     <div className="p-8 text-white">

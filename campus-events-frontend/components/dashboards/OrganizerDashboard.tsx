@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getEvents, approveEvent, rejectEvent } from "../../services/api";
+import { getEvents, deleteEvent } from "../../services/api";
 
 export default function OrganizerDashboard() {
   const [events, setEvents] = useState([]);
@@ -15,10 +15,11 @@ async function fetchEvents() {
   setEvents(res.content);
 }
 
-  async function deleteEvent(id: number) {
-    await api.delete(`/events/${id}`);
-    fetchEvents();
-  }
+async function deleteEventHandler(id: number) {
+  await deleteEvent(id);
+  fetchEvents();
+}
+
 
   return (
     <div className="p-8 text-white">
@@ -32,7 +33,7 @@ async function fetchEvents() {
 
             {event.status === "PENDING" && (
               <button
-                onClick={() => deleteEvent(event.id)}
+                onClick={() => deleteEventHandler(event.id)}
                 className="mt-4 bg-red-600 px-4 py-2 rounded"
               >
                 Delete
