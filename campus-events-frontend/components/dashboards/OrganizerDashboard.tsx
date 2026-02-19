@@ -11,7 +11,12 @@ export default function OrganizerDashboard() {
   const [form, setForm] = useState({
     title: "",
     description: "",
+    category: "",
+    organizerName: "",
     location: "",
+    startTime: "",
+    endTime: "",
+    isPublic: true,
   });
 
   useEffect(() => {
@@ -24,7 +29,7 @@ export default function OrganizerDashboard() {
       const res = await getEvents();
       setEvents(res?.content || []);
     } catch (err) {
-      console.error("Failed to fetch events", err);
+      console.error(err);
     } finally {
       setLoading(false);
     }
@@ -33,20 +38,38 @@ export default function OrganizerDashboard() {
   async function handleCreate(e: any) {
     e.preventDefault();
 
-    if (!form.title || !form.description || !form.location) {
-      alert("All fields are required");
+    if (
+      !form.title ||
+      !form.category ||
+      !form.organizerName ||
+      !form.startTime ||
+      !form.endTime
+    ) {
+      alert("Please fill required fields");
       return;
     }
 
     try {
       setCreating(true);
-      await createEvent(form);
 
-      // Reset form
+      // Convert datetime-local format properly
+      const payload = {
+        ...form,
+        startTime: new Date(form.startTime).toISOString(),
+        endTime: new Date(form.endTime).toISOString(),
+      };
+
+      await createEvent(payload);
+
       setForm({
         title: "",
         description: "",
+        category: "",
+        organizerName: "",
         location: "",
+        startTime: "",
+        endTime: "",
+        isPublic: true,
       });
 
       await fetchEvents();
@@ -66,17 +89,17 @@ export default function OrganizerDashboard() {
     <div className="p-8 text-white">
       <h2 className="text-3xl font-bold mb-6">Organizer Dashboard</h2>
 
-      {/* ---------------- CREATE EVENT FORM ---------------- */}
-      <div className="bg-slate-800 p-6 rounded-xl mb-8 shadow-lg">
+      {/* CREATE EVENT FORM */}
+      <div className="bg-slate-800 p-6 rounded-xl mb-8">
         <h3 className="text-xl font-semibold mb-4">
           Create New Event
         </h3>
 
         <form onSubmit={handleCreate} className="grid gap-4">
+
           <input
-            type="text"
-            placeholder="Event Title"
-            className="p-2 rounded bg-slate-700"
+            placeholder="Title"
+            className="p-2 bg-slate-700 rounded"
             value={form.title}
             onChange={(e) =>
               setForm({ ...form, title: e.target.value })
@@ -84,8 +107,8 @@ export default function OrganizerDashboard() {
           />
 
           <textarea
-            placeholder="Event Description"
-            className="p-2 rounded bg-slate-700"
+            placeholder="Description"
+            className="p-2 bg-slate-700 rounded"
             value={form.description}
             onChange={(e) =>
               setForm({ ...form, description: e.target.value })
@@ -93,32 +116,78 @@ export default function OrganizerDashboard() {
           />
 
           <input
-            type="text"
+            placeholder="Category"
+            className="p-2 bg-slate-700 rounded"
+            value={form.category}
+            onChange={(e) =>
+              setForm({ ...form, category: e.target.value })
+            }
+          />
+
+          <input
+            placeholder="Organizer Name"
+            className="p-2 bg-slate-700 rounded"
+            value={form.organizerName}
+            onChange={(e) =>
+              setForm({ ...form, organizerName: e.target.value })
+            }
+          />
+
+          <input
             placeholder="Location"
-            className="p-2 rounded bg-slate-700"
+            className="p-2 bg-slate-700 rounded"
             value={form.location}
             onChange={(e) =>
               setForm({ ...form, location: e.target.value })
             }
           />
 
+          <label>Start Time</label>
+          <input
+            type="datetime-local"
+            className="p-2 bg-slate-700 rounded"
+            value={form.startTime}
+            onChange={(e) =>
+              setForm({ ...form, startTime: e.target.value })
+            }
+          />
+
+          <label>End Time</label>
+          <input
+            type="datetime-local"
+            className="p-2 bg-slate-700 rounded"
+            value={form.endTime}
+            onChange={(e) =>
+              setForm({ ...form, endTime: e.target.value })
+            }
+          />
+
+          <label className="flex items-center gap-2">
+            <input
+              type="checkbox"
+              checked={form.isPublic}
+              onChange={(e) =>
+                setForm({ ...form, isPublic: e.target.checked })
+              }
+            />
+            Public Event
+          </label>
+
           <button
             type="submit"
             disabled={creating}
-            className="bg-green-600 px-4 py-2 rounded hover:bg-green-700 disabled:opacity-50"
+            className="bg-green-600 px-4 py-2 rounded disabled:opacity-50"
           >
             {creating ? "Creating..." : "Create Event"}
           </button>
         </form>
       </div>
 
-      {/* ---------------- EVENT LIST ---------------- */}
+      {/* EVENT LIST */}
       {loading ? (
         <p>Loading events...</p>
       ) : events.length === 0 ? (
-        <p className="text-gray-400">
-          No events created yet.
-        </p>
+        <p>No events created yet.</p>
       ) : (
         <div className="grid gap-6">
           {events.map((event) => (
