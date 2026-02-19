@@ -62,6 +62,14 @@ export function register(data: any) {
 /* ---------------------------------- */
 /* EVENTS APIs                     */
 /* ---------------------------------- */
+
+export function createEvent(data: any) {
+  return request("/events", {
+    method: "POST",
+    body: JSON.stringify(data),
+  }, true);
+}
+
 export function getEvents(page = 0, size = 6) {
   return request(`/events?page=${page}&size=${size}`, {}, true);
 }

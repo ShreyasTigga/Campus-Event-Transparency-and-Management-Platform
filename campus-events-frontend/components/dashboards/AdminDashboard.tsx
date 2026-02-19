@@ -5,29 +5,60 @@ import { getEvents, approveEvent, rejectEvent } from "../../services/api";
 
 export default function AdminDashboard() {
   const [events, setEvents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [processingId, setProcessingId] = useState<number | null>(null);
 
   useEffect(() => {
     fetchEvents();
   }, []);
 
   async function fetchEvents() {
-    const res = await getEvents();
-    setEvents(res.content);
+    try {
+      setLoading(true);
+      const res = await getEvents();
+      setEvents(res?.content || []);
+    } catch (err) {
+      console.error("Failed to fetch events", err);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function approve(id: number) {
-    await approveEvent(id);
-    fetchEvents();
+    try {
+      setProcessingId(id);
+      await approveEvent(id);
+      await fetchEvents();
+    } catch (err) {
+      console.error("Approve failed", err);
+    } finally {
+      setProcessingId(null);
+    }
   }
 
   async function reject(id: number) {
-    await rejectEvent(id);
-    fetchEvents();
+    try {
+      setProcessingId(id);
+      await rejectEvent(id);
+      await fetchEvents();
+    } catch (err) {
+      console.error("Reject failed", err);
+    } finally {
+      setProcessingId(null);
+    }
+  }
+
+  if (loading) {
+    return <div className="p-8 text-white">Loading events...</div>;
   }
 
   return (
     <div className="p-8 text-white">
       <h2 className="text-3xl font-bold mb-6">Admin Panel</h2>
+
+      {events.length === 0 && (
+        <p className="text-gray-400">No events found.</p>
+      )}
 
       <div className="grid gap-6">
         {events.map((event) => (
@@ -38,17 +69,19 @@ export default function AdminDashboard() {
             {event.status === "PENDING" && (
               <div className="flex gap-4 mt-4">
                 <button
+                  disabled={processingId === event.id}
                   onClick={() => approve(event.id)}
-                  className="bg-green-600 px-4 py-2 rounded"
+                  className="bg-green-600 px-4 py-2 rounded disabled:opacity-50"
                 >
-                  Approve
+                  {processingId === event.id ? "Approving..." : "Approve"}
                 </button>
 
                 <button
+                  disabled={processingId === event.id}
                   onClick={() => reject(event.id)}
-                  className="bg-red-600 px-4 py-2 rounded"
+                  className="bg-red-600 px-4 py-2 rounded disabled:opacity-50"
                 >
-                  Reject
+                  {processingId === event.id ? "Rejecting..." : "Reject"}
                 </button>
               </div>
             )}
