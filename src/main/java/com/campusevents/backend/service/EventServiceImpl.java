@@ -53,10 +53,10 @@ public class EventServiceImpl implements EventService {
 
         Page<Event> events;
 
-        if (role.equals("ADMIN")) {
+        if (role.equals("ROLE_ADMIN")) {
             events = eventRepository.findAll(pageable);
 
-        } else if (role.equals("ORGANIZER")) {
+        } else if (role.equals("ROLE_ORGANIZER")) {
             events = eventRepository.findByCreatedByEmail(email, pageable);
 
         } else {
@@ -81,11 +81,11 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
-        if (role.equals("ADMIN")) {
+        if (role.equals("ROLE_ADMIN")) {
             return mapToDTO(event);
         }
 
-        if (role.equals("ORGANIZER")) {
+        if (role.equals("ROLE_ORGANIZER")) {
 
             if (!event.getCreatedByEmail().equals(email)) {
                 throw new AccessDeniedException("Not your event");
@@ -105,7 +105,7 @@ public class EventServiceImpl implements EventService {
 
     @Override
     public EventResponseDTO approveEvent(Long eventId, String role) {
-        if (!role.equals("ADMIN")) {
+        if (!role.equals("ROLE_ADMIN")) {
             throw new AccessDeniedException("Only admins can approve events");
         }
 
@@ -121,7 +121,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public EventResponseDTO rejectEvent(Long eventId, String role, String comment) {
 
-        if (!role.equals("ADMIN")) {
+        if (!role.equals("ROLE_ADMIN")) {
             throw new AccessDeniedException("Only admins can reject");
         }
 
@@ -146,7 +146,7 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
         // Only creator or admin
-        if (!role.equals("ADMIN") && !event.getCreatedByEmail().equals(email)) {
+        if (!role.equals("ROLE_ADMIN") && !event.getCreatedByEmail().equals(email)) {
             throw new AccessDeniedException("You cannot edit this event");
         }
 
@@ -173,7 +173,7 @@ public class EventServiceImpl implements EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
-        if (!role.equals("ADMIN") && !event.getCreatedByEmail().equals(email)) {
+        if (!role.equals("ROLE_ADMIN") && !event.getCreatedByEmail().equals(email)) {
             throw new AccessDeniedException("You cannot delete this event");
         }
 
@@ -187,7 +187,7 @@ public class EventServiceImpl implements EventService {
     @Override
     public void enrollInEvent(Long eventId, String email, String role) {
 
-        if (!role.equals("STUDENT")) {
+        if (!role.equals("ROLE_STUDENT")) {
             throw new AccessDeniedException("Only students can enroll");
         }
 
@@ -223,12 +223,12 @@ public class EventServiceImpl implements EventService {
                 .orElseThrow(() -> new ResourceNotFoundException("Event not found"));
 
         // ADMIN can see all
-        if (!role.equals("ADMIN") && !role.equals("ORGANIZER")) {
+        if (!role.equals("ROLE_ADMIN") && !role.equals("ROLE_ORGANIZER")) {
             throw new AccessDeniedException("Only organizer or admin can view enrollments");
         }
 
         // ORGANIZER can only see their own event enrollments
-        if (role.equals("ORGANIZER") &&
+        if (role.equals("ROLE_ORGANIZER") &&
                 !event.getCreatedByEmail().equals(email)) {
             throw new AccessDeniedException("Not your event");
         }
